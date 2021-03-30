@@ -9,4 +9,5 @@ This is the very first step in Virtual Assistant for wake word detection (or Tri
 * Add real sound augmentations
 * Convert models to ONNX
 * Convert models to TorchScript
-* Refactoring serving code
+* Refactor serving code
+* Add bash script for training models

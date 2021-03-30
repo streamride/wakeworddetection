@@ -2,6 +2,8 @@ import datetime
 import os
 import time
 import logging
+from ctypes import *
+from contextlib import contextmanager
 
 import pyaudio
 import wave
@@ -13,11 +15,25 @@ chunk = 1024
 channels = 1
 sample_format = pyaudio.paInt16
 
+ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
+
+def py_error_handler(filename, line, function, err, fmt):
+    pass
+
+c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
+
+@contextmanager
+def noalsaerr():
+    asound = cdll.LoadLibrary('libasound.so')
+    asound.snd_lib_error_set_handler(c_error_handler)
+    yield
+    asound.snd_lib_error_set_handler(None)
 
 class WakeWordListener:
 
     def __init__(self):
-        self.p = pyaudio.PyAudio()
+        with noalsaerr():
+            self.p = pyaudio.PyAudio()
         self.stream = self.p.open(format=pyaudio.paInt16,
                                   channels=channels,
                                   rate=fs,
@@ -28,12 +44,12 @@ class WakeWordListener:
         try:
             self.stream.stop_stream()
             self.stream.close()
-            self.p.terminate()
+            self.p.terminate()  
         except:
             pass
 
     def get_dir_name(self,):
-        path = 'data/wake_word'
+        path = 'data/wake_word_test'
         if not os.path.exists(path):
             os.makedirs(path)
         return path
